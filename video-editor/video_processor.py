@@ -125,40 +125,49 @@ def remove_silences(
         return output_path
 
     # Build filter_complex
-    n = len(segments)
-    filter_parts = []
-    for i, (s, e) in enumerate(segments):
-        filter_parts.append(
-            f"[0:v]trim=start={s:.4f}:end={e:.4f},setpts=PTS-STARTPTS[v{i}];"
-        )
-        filter_parts.append(
-            f"[0:a]atrim=start={s:.4f}:end={e:.4f},asetpts=PTS-STARTPTS[a{i}];"
-        )
-
-    vconcat = "".join(f"[v{i}]" for i in range(n))
-    aconcat = "".join(f"[a{i}]" for i in range(n))
-    filter_parts.append(
-        f"{vconcat}{aconcat}concat=n={n}:v=1:a=1[vout][aout]"
-    )
-
-    filter_complex = "".join(filter_parts)
-
-    if progress_cb:
+   if progress_cb:
         progress_cb(30, "Applying jump cuts...")
 
-    cmd = [
-        "ffmpeg", "-i", input_path,
-        "-filter_complex", filter_complex,
-        "-map", "[vout]", "-map", "[aout]",
-        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-        "-c:a", "aac", "-b:a", "192k",
-        "-y", output_path,
-    ]
+    temp_dir = os.path.dirname(output_path)
+    temp_files = []
+
+    for i, (s, e) in enumerate(segments):
+        seg_path = os.path.join(temp_dir, f"_seg_{i}.mp4")
+        cmd = [
+            "ffmpeg",
+            "-ss", str(s), "-to", str(e),
+            "-i", input_path,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "192k",
+            "-avoid_negative_ts", "1",
+            "-y", seg_path,
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and os.path.exists(seg_path):
+            temp_files.append(seg_path)
+
+    if not temp_files:
+        subprocess.run(["ffmpeg", "-i", input_path, "-c", "copy", "-y", output_path], check=True, capture_output=True)
+        return output_path
+
+    concat_txt = os.path.join(temp_dir, "_concat.txt")
+    with open(concat_txt, "w") as f:
+        for tf in temp_files:
+            f.write(f"file '{tf}'\n")
+
+    cmd = ["ffmpeg", "-f", "concat", "-safe", "0", "-i", concat_txt, "-c", "copy", "-y", output_path]
     result = subprocess.run(cmd, capture_output=True, text=True)
+
+    for tf in temp_files:
+        try: os.remove(tf)
+        except: pass
+    try: os.remove(concat_txt)
+    except: pass
+
     if result.returncode != 0:
-        logger.error("FFmpeg error: %s", result.stderr[-2000:])
         raise RuntimeError(f"Jump cut failed: {result.stderr[-500:]}")
 
+    return output_path
     return output_path
 
 
