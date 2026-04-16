@@ -37,7 +37,7 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 JOBS: dict = {}
 
 # ── API Key (set in .env or environment variable)
-OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
 # ──────────────────────────────────────────────
 app = FastAPI(title="Saykin AI Video Editor", version="1.0.0")
@@ -63,7 +63,7 @@ async def index():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "api_key_set": bool(OPENAI_API_KEY)}
+    return {"status": "ok", "api_key_set": bool(GEMINI_API_KEY)}
 
 
 @app.post("/upload")
@@ -77,11 +77,11 @@ async def upload_video(
     Returns job_id immediately.
     """
     # Resolve API key: form field overrides env var
-    effective_key = api_key.strip() or OPENAI_API_KEY
+    effective_key = api_key.strip() or GEMINI_API_KEY
     if not effective_key:
         raise HTTPException(
             status_code=400,
-            detail="OpenAI API key is required. Paste it in the field on the page.",
+            detail="Gemini API key is required. Paste it in the field on the page.",
         )
 
     # Validate file type
