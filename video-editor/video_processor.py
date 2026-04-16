@@ -2,7 +2,7 @@
 video_processor.py
 Core video processing engine:
   - Silence detection + jump cuts via FFmpeg
-  - Transcription via OpenAI Whisper
+  - Transcription via Google Gemini
   - ASS subtitle generation (Saykin-style bold center captions)
   - Dynamic zoom-in effects on sentence starts
 """
@@ -12,6 +12,7 @@ import re
 import json
 import subprocess
 import logging
+import time
 from typing import List, Dict, Tuple, Optional
 
 logger = logging.getLogger(__name__)
@@ -162,22 +163,86 @@ def remove_silences(
 
 
 # ──────────────────────────────────────────────
-# Step 2 – Whisper Transcription
+# Step 2 – Gemini Transcription
 # ──────────────────────────────────────────────
 
+def _extract_audio(video_path: str, audio_path: str) -> str:
+    """Extract audio from video as mp3 for Gemini upload."""
+    cmd = [
+        "ffmpeg", "-i", video_path,
+        "-vn", "-ac", "1", "-ar", "16000",
+        "-b:a", "64k",
+        "-y", audio_path,
+    ]
+    subprocess.run(cmd, check=True, capture_output=True)
+    return audio_path
+
+
 def transcribe(input_path: str, api_key: str) -> Dict:
-    import openai
-    client = openai.OpenAI(api_key=api_key)
-    with open(input_path, "rb") as f:
-        response = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=f,
-            response_format="verbose_json",
-            timestamp_granularities=["segment", "word"],
-        )
-    if hasattr(response, "model_dump"):
-        return response.model_dump()
-    return dict(response)
+    """
+    Transcribe video audio using Google Gemini 1.5 Flash.
+    Returns a dict with 'text' and 'segments' keys.
+    """
+    import google.generativeai as genai
+
+    genai.configure(api_key=api_key)
+
+    # Extract audio first (much smaller than video)
+    audio_path = input_path.replace(".mp4", "_audio.mp3").replace(".mov", "_audio.mp3")
+    _extract_audio(input_path, audio_path)
+
+    # Upload audio to Gemini
+    audio_file = genai.upload_file(audio_path, mime_type="audio/mpeg")
+
+    # Wait for file to be ready
+    for _ in range(20):
+        file_info = genai.get_file(audio_file.name)
+        if file_info.state.name == "ACTIVE":
+            break
+        time.sleep(2)
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
+    prompt = """Transcribe this audio accurately.
+Return ONLY a valid JSON object in this exact format with no extra text:
+{
+  "text": "the full transcript here",
+  "segments": [
+    {"start": 0.0, "end": 3.5, "text": "words in this segment"},
+    {"start": 3.5, "end": 7.0, "text": "next segment words"}
+  ]
+}
+Estimate timestamps in seconds based on natural speech pacing. Each segment should be 1-3 sentences."""
+
+    response = model.generate_content([audio_file, prompt])
+
+    # Cleanup audio file
+    try:
+        os.remove(audio_path)
+    except Exception:
+        pass
+
+    # Parse JSON from response
+    raw = response.text.strip()
+    # Strip markdown code fences if present
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+
+    try:
+        data = json.loads(raw)
+        # Ensure segments have required fields
+        for seg in data.get("segments", []):
+            if "start" not in seg:
+                seg["start"] = 0.0
+            if "end" not in seg:
+                seg["end"] = seg["start"] + 2.0
+        return data
+    except json.JSONDecodeError:
+        # Fallback: return plain text with one segment
+        return {
+            "text": raw,
+            "segments": [{"start": 0.0, "end": 5.0, "text": raw[:200]}],
+        }
 
 
 # ──────────────────────────────────────────────
@@ -205,6 +270,32 @@ def _chunk_words(words: List[Dict], chunk_size: int = 3) -> List[Dict]:
     return chunks
 
 
+def _chunk_segments(segments: List[Dict], words_per_chunk: int = 4) -> List[Dict]:
+    """Split segments into small caption chunks."""
+    chunks = []
+    for seg in segments:
+        text = seg.get("text", "").strip()
+        words = text.split()
+        start = seg.get("start", 0.0)
+        end = seg.get("end", start + 2.0)
+        duration = end - start
+
+        if not words:
+            continue
+
+        # Split into groups of words_per_chunk
+        for i in range(0, len(words), words_per_chunk):
+            group = words[i: i + words_per_chunk]
+            chunk_start = start + (i / len(words)) * duration
+            chunk_end = start + (min(i + words_per_chunk, len(words)) / len(words)) * duration
+            chunks.append({
+                "text": " ".join(group).upper(),
+                "start": chunk_start,
+                "end": chunk_end,
+            })
+    return chunks
+
+
 def build_ass_subtitles(transcript: Dict, output_path: str) -> str:
     header = """\
 [Script Info]
@@ -221,6 +312,7 @@ Style: Highlight,Arial Black,88,&H0000FFFF,&H000000FF,&H00000000,&H80000000,-1,0
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
+    # Try word-level first, then segment-level
     words = []
     if "words" in transcript:
         words = transcript["words"]
@@ -231,13 +323,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     if words:
         chunks = _chunk_words(words, chunk_size=3)
     else:
-        chunks = []
-        for seg in transcript.get("segments", []):
-            chunks.append({
-                "text": seg.get("text", "").strip().upper(),
-                "start": seg["start"],
-                "end": seg["end"],
-            })
+        chunks = _chunk_segments(transcript.get("segments", []), words_per_chunk=4)
 
     events = []
     for i, chunk in enumerate(chunks):
@@ -358,7 +444,7 @@ def process_video(
     remove_silences(input_path, cut_path, silences, progress_cb)
 
     if progress_cb:
-        progress_cb(40, "Transcribing with Whisper...")
+        progress_cb(40, "Transcribing with Gemini...")
 
     transcript_data = transcribe(cut_path, api_key)
     full_text = transcript_data.get("text", "")
