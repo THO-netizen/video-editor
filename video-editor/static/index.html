@@ -8,46 +8,247 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <style>
-    /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #0a0a0f;
-      --surface:  #13131a;
-      --surface2: #1c1c28;
-      --border:   #2a2a3d;
-      --accent:   #7c3aed;
-      --accent2:  #a855f7;
-      --yellow:   #fbbf24;
-      --green:    #22c55e;
-      --red:      #ef4444;
-      --text:     #f1f5f9;
-      --muted:    #94a3b8;
-      --radius:   14px;
+      --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c28;
+      --border: #2a2a3d; --accent: #7c3aed; --accent2: #a855f7;
+      --yellow: #fbbf24; --green: #22c55e; --red: #ef4444;
+      --text: #f1f5f9; --muted: #94a3b8; --radius: 14px;
     }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      line-height: 1.6;
-    }
-
-    /* ── Scrollbar ── */
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-
-    /* ── Layout ── */
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    /* ── Nav ── */
-    nav {
-      position: sticky
+    .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 16px 0; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.03em; background: linear-gradient(135deg, var(--accent2), var(--yellow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .logo span { -webkit-text-fill-color: var(--text); color: var(--text); }
+    .badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: 99px; }
+    .hero { text-align: center; padding: 72px 0 48px; }
+    .hero-tag { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3); padding: 6px 16px; border-radius: 99px; margin-bottom: 24px; }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px; }
+    .hero h1 em { font-style: normal; background: linear-gradient(135deg, var(--accent2) 0%, var(--yellow) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 1.1rem; color: var(--muted); max-width: 560px; margin: 0 auto; }
+    .features { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 32px 0 56px; }
+    .feat { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: 99px; }
+    .feat .icon { font-size: 1rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 20px; }
+    .card-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .card-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: var(--accent2); border-radius: 2px; }
+    .api-key-wrap { position: relative; margin-bottom: 20px; }
+    .api-key-label { font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .api-key-label .highlight { color: var(--yellow); background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+    input[type="text"], input[type="password"] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.9rem; font-family: 'Inter', monospace; padding: 12px 16px; outline: none; transition: border-color 0.2s; }
+    input[type="text"]:focus, input[type="password"]:focus { border-color: var(--accent2); }
+    input::placeholder { color: var(--muted); opacity: 0.6; }
+    .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 52px 24px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent2); background: rgba(124,58,237,0.05); }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .drop-icon { font-size: 3rem; margin-bottom: 16px; display: block; filter: grayscale(0.3); }
+    .drop-zone h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+    .drop-zone p { font-size: 0.85rem; color: var(--muted); }
+    .drop-zone .selected-name { margin-top: 14px; font-size: 0.85rem; font-weight: 600; color: var(--accent2); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .row-2 { grid-template-columns: 1fr; } }
+    .field-label { font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .btn-primary { display: block; width: 100%; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s; margin-top: 20px; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    #progress-section { display: none; }
+    .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 10px; overflow: hidden; margin: 16px 0; }
+    .progress-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2), var(--yellow)); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; transition: width 0.4s ease; width: 0%; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .progress-label { font-size: 0.9rem; color: var(--muted); text-align: center; }
+    .progress-pct { font-size: 2rem; font-weight: 900; text-align: center; letter-spacing: -0.03em; margin-bottom: 4px; }
+    #results-section { display: none; }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 640px) { .result-grid { grid-template-columns: 1fr; } }
+    .download-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px; border-radius: 12px; background: linear-gradient(135deg, var(--green), #16a34a); color: #fff; font-size: 1rem; font-weight: 700; text-decoration: none; transition: opacity 0.2s, transform 0.15s; margin-bottom: 20px; }
+    .download-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .strategy-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { font-size: 0.8rem; font-weight: 700; padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .script-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; font-size: 0.92rem; line-height: 1.8; white-space: pre-wrap; max-height: 420px; overflow-y: auto; }
+    .script-box .zoom-cue { display: inline-block; background: rgba(251,191,36,0.15); color: var(--yellow); border-radius: 4px; padding: 0 6px; font-size: 0.78rem; font-weight: 700; vertical-align: middle; }
+    .script-box .pause-cue { display: inline-block; background: rgba(124,58,237,0.15); color: var(--accent2); border-radius: 4px; padding: 0 6px; font-size: 0.78rem; font-weight: 700; vertical-align: middle; }
+    .week-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+    .week-card h4 { font-size: 0.82rem; font-weight: 700; color: var(--accent2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+    .week-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .week-card li { font-size: 0.88rem; color: var(--text); padding-left: 18px; position: relative; }
+    .week-card li::before { content: '▸'; position: absolute; left: 0; color: var(--accent2); }
+    .hook-box { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 20px; font-size: 1.15rem; font-weight: 700; font-style: italic; color: var(--yellow); margin-bottom: 20px; line-height: 1.5; }
+    .hashtags-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .hashtag { font-size: 0.8rem; font-weight: 600; color: var(--accent2); background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); padding: 4px 12px; border-radius: 99px; }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--muted); background: none; border: 1px solid var(--border); padding: 8px 18px; border-radius: 99px; cursor: pointer; transition: all 0.15s; margin-top: 12px; }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent2); }
+    .error-box { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 16px 20px; color: var(--red); font-size: 0.9rem; margin-top: 12px; display: none; }
+    footer { text-align: center; padding: 48px 0 32px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 80px; }
+    footer strong { color: var(--text); }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="container nav-inner">
+    <div class="logo">Saykin<span>Edit</span></div>
+    <span class="badge">AI-Powered</span>
+  </div>
+</nav>
+<div class="container">
+  <div class="hero">
+    <div class="hero-tag">&#9889; Powered by Google Gemini + FFmpeg</div>
+    <h1>Turn Raw Footage into<br/><em>Viral Content</em> &#8212; Instantly</h1>
+    <p>Auto jump-cuts, bold center captions, dynamic zooms &amp; a full AI content strategy. Inspired by Artem Saykin's editing style.</p>
+  </div>
+  <div class="features">
+    <div class="feat"><span class="icon">&#9986;&#65039;</span> Auto Jump Cuts</div>
+    <div class="feat"><span class="icon">&#128172;</span> Saykin Captions</div>
+    <div class="feat"><span class="icon">&#128269;</span> Dynamic Zooms</div>
+    <div class="feat"><span class="icon">&#129302;</span> Gemini Strategy</div>
+    <div class="feat"><span class="icon">&#128197;</span> 4-Week Loop Plan</div>
+  </div>
+  <div id="upload-section">
+    <div class="card">
+      <div class="card-title">&#128273; Gemini API Key</div>
+      <div class="api-key-label">Paste your key here <span class="highlight">&#8592; REQUIRED</span></div>
+      <div class="api-key-wrap">
+        <input type="password" id="api-key-input" placeholder="AIzaSy..." autocomplete="off" />
+      </div>
+      <p style="font-size:0.78rem;color:var(--muted);">Your key is never stored. Get one free at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent2);">aistudio.google.com/app/apikey</a></p>
+    </div>
+    <div class="card">
+      <div class="card-title">&#127916; Upload Your Video</div>
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="video/*" />
+        <span class="drop-icon">&#127909;</span>
+        <h3>Drag &amp; drop your video here</h3>
+        <p>MP4, MOV, AVI, MKV, WebM &#8212; max 500MB</p>
+        <div class="selected-name" id="selected-name"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">&#129504; Content Intelligence</div>
+      <div class="row-2">
+        <div>
+          <div class="field-label">Your Profession / Niche</div>
+          <input type="text" id="profession-input" placeholder="e.g. Fitness Coach, SaaS Founder, Real Estate Agent" />
+        </div>
+        <div>
+          <div class="field-label">Silence Threshold</div>
+          <input type="text" id="silence-db" placeholder="-35 dB (default)" />
+        </div>
+      </div>
+    </div>
+    <div class="error-box" id="error-box"></div>
+    <button class="btn-primary" id="submit-btn" onclick="startProcessing()">&#9889; Edit My Video with AI</button>
+  </div>
+  <div id="progress-section">
+    <div class="card">
+      <div class="card-title">&#128260; Processing</div>
+      <div class="progress-pct" id="pct-label">0%</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="progress-label" id="progress-label">Initialising pipeline...</div>
+    </div>
+  </div>
+  <div id="results-section">
+    <div class="card">
+      <div class="card-title">&#9989; Your Video is Ready</div>
+      <a class="download-btn" id="download-link" href="#" target="_blank">&#11015;&#65039; Download Edited Video</a>
+      <div class="strategy-tabs">
+        <button class="tab active" onclick="switchTab('hook')">&#127907; Hook</button>
+        <button class="tab" onclick="switchTab('script')">&#128221; Next Script</button>
+        <button class="tab" onclick="switchTab('loop')">&#128197; 4-Week Plan</button>
+        <button class="tab" onclick="switchTab('hashtags')">&#127991;&#65039; Hashtags</button>
+      </div>
+      <div id="tab-hook" class="tab-pane active">
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Use this as the opening line of your next video:</p>
+        <div class="hook-box" id="hook-content">Loading...</div>
+        <p style="font-size:0.82rem;color:var(--muted)" id="posting-times"></p>
+      </div>
+      <div id="tab-script" class="tab-pane">
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Ready-to-record script &#8212; <span style="color:var(--yellow)">[ZOOM]</span> = snap zoom, <span style="color:var(--accent2)">[PAUSE]</span> = dramatic beat:</p>
+        <div class="script-box" id="script-content">Loading...</div>
+      </div>
+      <div id="tab-loop" class="tab-pane"><div id="loop-content">Loading...</div></div>
+      <div id="tab-hashtags" class="tab-pane">
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:4px;">Copy these for your next post:</p>
+        <div class="hashtags-wrap" id="hashtags-content"></div>
+      </div>
+    </div>
+    <button class="btn-ghost" onclick="resetApp()">&#8617; Edit Another Video</button>
+  </div>
+</div>
+<footer>
+  <strong>SaykinEdit</strong> &#8212; AI Video Editor &nbsp;|&nbsp; Built with FFmpeg &amp; Google Gemini<br/>
+  <span style="margin-top:6px;display:block;">Your API key is never stored. Videos are processed on the server.</span>
+</footer>
+<script>
+  let currentJobId = null;
+  let pollInterval = null;
+  let selectedFile = null;
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const selectedName = document.getElementById('selected-name');
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); const file = e.dataTransfer.files[0]; if (file) handleFile(file); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+  function handleFile(file) { selectedFile = file; const mb = (file.size/1024/1024).toFixed(1); selectedName.textContent = '📎 ' + file.name + ' (' + mb + ' MB)'; }
+  async function startProcessing() {
+    const apiKey = document.getElementById('api-key-input').value.trim();
+    const profession = document.getElementById('profession-input').value.trim();
+    if (!apiKey) return showError('Please paste your Gemini API key above.');
+    if (!selectedFile) return showError('Please select a video file to upload.');
+    hideError();
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('api_key', apiKey);
+    formData.append('profession', profession);
+    document.getElementById('submit-btn').disabled = true;
+    showSection('progress');
+    setProgress(2, 'Uploading video...');
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      if (!res.ok) { const err = await res.json().catch(() => ({ detail: 'Upload failed' })); throw new Error(err.detail || 'Upload failed'); }
+      const data = await res.json();
+      currentJobId = data.job_id;
+      pollStatus();
+    } catch (err) { showSection('upload'); showError(err.message); document.getElementById('submit-btn').disabled = false; }
+  }
+  function pollStatus() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch('/status/' + currentJobId);
+        const data = await res.json();
+        setProgress(data.progress, data.message);
+        if (data.status === 'done') { clearInterval(pollInterval); showResults(data); }
+        else if (data.status === 'error') { clearInterval(pollInterval); showSection('upload'); showError(data.error || 'Processing failed.'); document.getElementById('submit-btn').disabled = false; }
+      } catch(e) {}
+    }, 1500);
+  }
+  function setProgress(pct, msg) { document.getElementById('progress-bar').style.width = pct+'%'; document.getElementById('pct-label').textContent = pct+'%'; document.getElementById('progress-label').textContent = msg; }
+  function showResults(data) { document.getElementById('download-link').href = '/download/'+currentJobId; populateStrategy(data.strategy||{}); showSection('results'); }
+  function populateStrategy(s) {
+    document.getElementById('hook-content').textContent = s.hook || 'No hook generated.';
+    if (s.posting_times) document.getElementById('posting-times').textContent = 'Best time to post: ' + s.posting_times;
+    const rawScript = s.next_video_script || 'No script generated.';
+    document.getElementById('script-content').innerHTML = rawScript.replace(/\[ZOOM\]/g,'<span class="zoom-cue">[ZOOM]</span>').replace(/\[PAUSE\]/g,'<span class="pause-cue">[PAUSE]</span>');
+    const loopEl = document.getElementById('loop-content'); loopEl.innerHTML = '';
+    (s.content_loop||[]).forEach(week => { const div = document.createElement('div'); div.className='week-card'; const vids=(week.videos||[]).map(v=>'<li>'+v+'</li>').join(''); div.innerHTML='<h4>Week '+week.week+' — '+(week.theme||'')+'</h4><ul>'+vids+'</ul>'; loopEl.appendChild(div); });
+    if (!(s.content_loop||[]).length) loopEl.textContent = 'No loop strategy generated.';
+    const hashEl = document.getElementById('hashtags-content'); hashEl.innerHTML = '';
+    (s.hashtags||[]).forEach(tag => { const span = document.createElement('span'); span.className='hashtag'; span.textContent=tag.startsWith('#')?tag:'#'+tag; hashEl.appendChild(span); });
+  }
+  function switchTab(name) { document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active')); document.querySelector('.tab[onclick="switchTab(\''+name+'\')"]').classList.add('active'); document.getElementById('tab-'+name).classList.add('active'); }
+  function showSection(name) { document.getElementById('upload-section').style.display=name==='upload'?'block':'none'; document.getElementById('progress-section').style.display=name==='progress'?'block':'none'; document.getElementById('results-section').style.display=name==='results'?'block':'none'; }
+  function resetApp() { if(pollInterval)clearInterval(pollInterval); currentJobId=null; selectedFile=null; selectedName.textContent=''; fileInput.value=''; document.getElementById('submit-btn').disabled=false; setProgress(0,''); hideError(); showSection('upload'); }
+  function showError(msg) { const box=document.getElementById('error-box'); box.textContent='⚠️ '+msg; box.style.display='block'; }
+  function hideError() { document.getElementById('error-box').style.display='none'; }
+</script>
+</body>
+</html>
